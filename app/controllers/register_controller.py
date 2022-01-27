@@ -25,5 +25,7 @@ def add_serie():
         Series.add_to_database(list(new_serie.values()))
     except errors.UniqueViolation:
         return jsonify(erro= 'Série já cadastrada!'), 422
+    except errors.UndefinedTable:
+        Series.create()
 
     return jsonify(new_serie), 201
