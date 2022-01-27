@@ -2,13 +2,11 @@ from flask import jsonify
 from psycopg2 import errors
 
 from app.models.series_model import Series
-from app.models import conn
 
 def get_serie_by_id(serie_id: int):
     try:
         Series.get_by_id(serie_id)
     except errors.UndefinedTable:
-        conn.rollback()
         Series.create()
         return jsonify(data= {}), 404
     

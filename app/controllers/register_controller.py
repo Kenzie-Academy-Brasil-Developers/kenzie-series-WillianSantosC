@@ -1,7 +1,6 @@
 from flask import jsonify, request
 from psycopg2 import errors
 
-from app.models import conn
 from app.models.series_model import Series
 
 def add_serie():
@@ -22,8 +21,9 @@ def add_serie():
                     "recebidas": list(data.keys())
                  }, 400
     
-    serie = (new_serie['serie'], new_serie['seasons'], new_serie['released_date'], new_serie['genre'], new_serie['imdb_rating'])
-   
-    Series.add_to_database(serie)
+    try:
+        Series.add_to_database(list(new_serie.values()))
+    except errors.UniqueViolation:
+        return jsonify(erro= 'Série já cadastrada!'), 422
 
     return jsonify(new_serie), 201

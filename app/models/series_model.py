@@ -1,14 +1,7 @@
-from os import getenv
-import psycopg2
+from app.models import DatabaseConnector
 
-configs = {
-    "host": getenv("DB_HOST"),
-    "database": getenv("DB_NAME"),
-    "user": getenv("DB_USER"),
-    "password": getenv("DB_PASSWORD"),
-}
 
-class Series:
+class Series(DatabaseConnector):
 
     def __init__(self, *args, **kwargs) -> None:
         self.serie = kwargs['serie'].title()
@@ -17,13 +10,11 @@ class Series:
         self.genre = kwargs['genre'].title()
         self.imdb_rating = kwargs['imdb_rating']
 
-    @staticmethod
-    def create():
-        conn = psycopg2.connect(**configs)
-
-        cur = conn.cursor()
-
-        cur.execute(""" 
+    @classmethod
+    def create(cls):
+        cls.get_conn_cur()
+        
+        cls.cur.execute(""" 
             CREATE TABLE IF NOT EXISTS ka_series (
                 id BIGSERIAL PRIMARY KEY,
                 serie VARCHAR(100) NOT NULL UNIQUE,
@@ -34,32 +25,23 @@ class Series:
             )
         """)
 
-        conn.commit()
-
-        cur.close()
-        conn.close()
+        cls.commit_and_close()
     
-    @staticmethod
-    def get_all():
-        conn = psycopg2.connect(**configs)
+    @classmethod
+    def get_all(cls):
+        cls.get_conn_cur()
 
-        cur = conn.cursor()
+        cls.cur.execute("SELECT * FROM ka_series")
 
-        cur.execute("SELECT * FROM ka_series")
+        series = cls.cur.fetchall()
 
-        series = cur.fetchall()
-
-        conn.commit()
-        cur.close()
-        conn.close()
+        cls.commit_and_close()
 
         return series
 
-    @staticmethod
-    def add_to_database(data: dict):
-        conn = psycopg2.connect(**configs)
-
-        cur = conn.cursor()
+    @classmethod
+    def add_to_database(cls,data: dict):
+        cls.get_conn_cur()
 
         query = ("""
             INSERT INTO ka_series
@@ -69,29 +51,21 @@ class Series:
             RETURNING *
         """)
 
-        cur.execute(query, data)
+        cls.cur.execute(query, data)
 
-        conn.commit()
+        cls.commit_and_close()
 
-        cur.close()
-        conn.close()
-
-    @staticmethod
-    def get_by_id(serie_id: int):
-        conn = psycopg2.connect(**configs)
-
-        cur = conn.cursor()
+    @classmethod
+    def get_by_id(cls,serie_id: int):
+        cls.get_conn_cur()
 
         query = "SELECT * FROM ka_series WHERE id = %s"
 
-        cur.execute(query,(serie_id,))
+        cls.cur.execute(query,(serie_id,))
 
-        result = cur.fetchall()
+        result = cls.cur.fetchall()
 
-        conn.commit()
-
-        cur.close()
-        conn.close()
+        cls.commit_and_close()
 
         return result
 
